@@ -29,6 +29,8 @@ import com.example.android.mygarden.R;
 import com.example.android.mygarden.provider.PlantContract.PlantEntry;
 import com.example.android.mygarden.utils.PlantUtils;
 
+import org.w3c.dom.Text;
+
 public class PlantListAdapter extends RecyclerView.Adapter<PlantListAdapter.PlantViewHolder> {
 
     private Context mContext;
@@ -79,6 +81,7 @@ public class PlantListAdapter extends RecyclerView.Adapter<PlantListAdapter.Plan
         holder.plantImageView.setImageResource(imgRes);
         holder.plantNameView.setText(String.valueOf(plantId));
         holder.plantImageView.setTag(plantId);
+        holder.plantIdView.setText(Long.toString(plantId));
     }
 
     public void swapCursor(Cursor newCursor) {
@@ -110,11 +113,13 @@ public class PlantListAdapter extends RecyclerView.Adapter<PlantListAdapter.Plan
 
         ImageView plantImageView;
         TextView plantNameView;
+        TextView plantIdView;
 
         public PlantViewHolder(View itemView) {
             super(itemView);
             plantImageView = (ImageView) itemView.findViewById(R.id.plant_list_item_image);
             plantNameView = (TextView) itemView.findViewById(R.id.plant_list_item_name);
+            plantIdView = (TextView) itemView.findViewById(R.id.plant_list_item_id);
         }
 
     }
