@@ -16,11 +16,15 @@ package com.example.android.mygarden;
 * limitations under the License.
 */
 
+import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
+import android.os.Bundle;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
@@ -32,13 +36,24 @@ import com.example.android.mygarden.ui.PlantDetailActivity;
 public class PlantWidgetProvider extends AppWidgetProvider {
 
     // setImageViewResource to update the widget’s image
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     static void updateAppWidget(Context context, AppWidgetManager appWidgetManager,
                                 int imgRes, long plantId, boolean showWater, int appWidgetId) {
 
-        // TODO (4): separate the updateAppWidget logic into getGardenGridRemoteView and getSinglePlantRemoteView
-        // TODO (5): Use getAppWidgetOptions to get widget width and use the appropriate RemoteView method
-        // TODO (6): Set the PendingIntent template in getGardenGridRemoteView to launch PlantDetailActivity
-        
+        Bundle bundle = appWidgetManager.getAppWidgetOptions(appWidgetId);
+        int minWidth = bundle.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH);
+        RemoteViews rw;
+        if(minWidth < 300){
+            rw = getSinglePlantRemoteView(context, appWidgetManager, imgRes, plantId, showWater, appWidgetId);
+        } else {
+            rw = getGardenGridRemoteView(context);
+        }
+
+        appWidgetManager.updateAppWidget(appWidgetId, rw);
+
+    }
+
+    private static RemoteViews getSinglePlantRemoteView(Context context, AppWidgetManager appWidgetManager, int imgRes, long plantId, boolean showWater, int appWidgetId) {
         Intent intent;
         if (plantId == PlantContract.INVALID_PLANT_ID) {
             intent = new Intent(context, MainActivity.class);
@@ -47,7 +62,7 @@ public class PlantWidgetProvider extends AppWidgetProvider {
             intent = new Intent(context, PlantDetailActivity.class);
             intent.putExtra(PlantDetailActivity.EXTRA_PLANT_ID, plantId);
         }
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         // Construct the RemoteViews object
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.plant_widget);
         // Update image
@@ -67,6 +82,23 @@ public class PlantWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_water_button, wateringPendingIntent);
         // Instruct the widget manager to update the widget
         appWidgetManager.updateAppWidget(appWidgetId, views);
+        return views;
+    }
+
+    private static RemoteViews getGardenGridRemoteView(Context context) {
+
+        RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.widget_grid_view);
+
+        Intent intent = new Intent(context, GridWidgetService.class);
+        remoteViews.setRemoteAdapter(R.id.widget_grid_view, intent);
+
+        Intent detailIntent = new Intent(context, PlantDetailActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, detailIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        remoteViews.setPendingIntentTemplate(R.id.widget_grid_view, pendingIntent);
+
+        remoteViews.setEmptyView(R.id.widget_grid_view, R.id.empty_view);
+
+        return  remoteViews;
     }
 
     @Override
@@ -75,6 +107,8 @@ public class PlantWidgetProvider extends AppWidgetProvider {
         PlantWateringService.startActionUpdatePlantWidgets(context);
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     public static void updatePlantWidgets(Context context, AppWidgetManager appWidgetManager,
                                           int imgRes, long plantId, boolean showWater, int[] appWidgetIds) {
         for (int appWidgetId : appWidgetIds) {
@@ -97,4 +131,9 @@ public class PlantWidgetProvider extends AppWidgetProvider {
         // Perform any action when the last AppWidget instance for this provider is deleted
     }
 
+    @Override
+    public void onAppWidgetOptionsChanged(Context context, AppWidgetManager appWidgetManager, int appWidgetId, Bundle newOptions) {
+        PlantWateringService.startActionUpdatePlantWidgets(context);
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions);
+    }
 }

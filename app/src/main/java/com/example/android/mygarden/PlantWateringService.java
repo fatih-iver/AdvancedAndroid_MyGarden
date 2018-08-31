@@ -16,6 +16,7 @@ package com.example.android.mygarden;
 * limitations under the License.
 */
 
+import android.annotation.TargetApi;
 import android.app.IntentService;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
@@ -25,6 +26,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 
 import com.example.android.mygarden.provider.PlantContract;
 import com.example.android.mygarden.utils.PlantUtils;
@@ -75,6 +78,8 @@ public class PlantWateringService extends IntentService {
     /**
      * @param intent
      */
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
@@ -113,6 +118,8 @@ public class PlantWateringService extends IntentService {
     /**
      * Handle action UpdatePlantWidgets in the provided background thread
      */
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     private void handleActionUpdatePlantWidgets() {
         //Query to get the plant that's most in need for water (last watered)
         Uri PLANT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH_PLANTS).build();
@@ -146,6 +153,9 @@ public class PlantWateringService extends IntentService {
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
         int[] appWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(this, PlantWidgetProvider.class));
         //Now update all widgets
+        appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.widget_grid_view);
+
         PlantWidgetProvider.updatePlantWidgets(this, appWidgetManager, imgRes,plantId ,canWater,appWidgetIds);
+
     }
 }
